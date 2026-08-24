@@ -3,6 +3,7 @@ local CoreGui = game:GetService("CoreGui")
 local TweenService = game:GetService("TweenService")
 local VirtualUser = game:GetService("VirtualUser")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 
 local player = Players.LocalPlayer
 
@@ -15,20 +16,23 @@ _G.Config = {
     SelectWeapon = "Melee", -- "Melee", "Blox Fruit", "Sword", "Gun"
     AutoBuso = true,
     AutoStats = false,
-    SelectStat = "Melee", -- "Melee", "Defense", "Sword", "Gun", "Demon Fruit"
+    SelectStat = "Melee",
 }
 
 local currentTween = nil
 
 -- ==========================================
--- 2. أنظمة الحماية والتنقل المتقدمة
+-- 2. محرك عدم التعليق بالجدران (Noclip Engine)
 -- ==========================================
 
--- نظام Anti-AFK لحماية من الخروج المباشر
-player.Idled:Connect(function()
-    VirtualUser:Button2Down(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
-    task.wait(1)
-    VirtualUser:Button2Up(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
+RunService.Stepped:Connect(function()
+    if _G.Config.AutoFarmLevel and player.Character then
+        for _, part in pairs(player.Character:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.CanCollide = false
+            end
+        end
+    end
 end)
 
 local function StopMovement()
@@ -48,12 +52,12 @@ local function TweenTo(cframe, speed)
     if char and char:FindFirstChild("HumanoidRootPart") then
         local hrp = char.HumanoidRootPart
         local dist = (hrp.Position - cframe.Position).Magnitude
-        if dist < 10 then
+        if dist < 8 then
             hrp.CFrame = cframe
             return
         end
         StopMovement()
-        local moveSpeed = speed or 320
+        local moveSpeed = speed or 300
         local info = TweenInfo.new(dist / moveSpeed, Enum.EasingStyle.Linear)
         currentTween = TweenService:Create(hrp, info, {CFrame = cframe})
         currentTween:Play()
@@ -61,28 +65,18 @@ local function TweenTo(cframe, speed)
     end
 end
 
--- تجهيز السلاح المختار تلقائياً
 local function EquipWeapon()
     local backpack = player.Backpack
     local char = player.Character
     if not char then return end
-    
     for _, item in pairs(backpack:GetChildren()) do
-        if item:IsA("Tool") then
-            if _G.Config.SelectWeapon == "Melee" and item.ToolTip == "Melee" then
-                char.Humanoid:EquipTool(item)
-            elseif _G.Config.SelectWeapon == "Blox Fruit" and item.ToolTip == "Blox Fruit" then
-                char.Humanoid:EquipTool(item)
-            elseif _G.Config.SelectWeapon == "Sword" and item.ToolTip == "Sword" then
-                char.Humanoid:EquipTool(item)
-            elseif _G.Config.SelectWeapon == "Gun" and item.ToolTip == "Gun" then
-                char.Humanoid:EquipTool(item)
-            end
+        if item:IsA("Tool") and item.ToolTip == _G.Config.SelectWeapon then
+            char.Humanoid:EquipTool(item)
+            break
         end
     end
 end
 
--- نظام Fast Attack
 local function FastClick()
     if _G.Config.FastAttack then
         VirtualUser:CaptureController()
@@ -91,7 +85,52 @@ local function FastClick()
 end
 
 -- ==========================================
--- 3. واجهة المستخدم المتطورة (UI Design)
+-- 3. نظام تحديد المهمة والجزيرة حسب الليفل
+-- ==========================================
+
+local function GetQuestData()
+    local level = player.Data.Level.Value
+    
+    -- Sea 1 / Sea 2 / Sea 3 (خوارزمية الفحص الذاتي)
+    if level >= 2550 then
+        -- Max Level Quest/Farm (Chocolate Bar Battlers / Candy Island)
+        return {
+            QuestName = "ChocolateQuest1",
+            QuestLevel = 1,
+            QuestNPC = CFrame.new(288.7, 24.7, -12528.2),
+            EnemyName = "Chocolate Bar Battler",
+            EnemyCFrame = CFrame.new(220, 25, -12100)
+        }
+    elseif level >= 1 and level < 15 then
+        return {
+            QuestName = "BanditQuest1",
+            QuestLevel = 1,
+            QuestNPC = CFrame.new(1059.3, 15.4, 1550.4),
+            EnemyName = "Bandit",
+            EnemyCFrame = CFrame.new(1185, 16, 1625)
+        }
+    elseif level >= 15 and level < 30 then
+        return {
+            QuestName = "JungleQuest",
+            QuestLevel = 1,
+            QuestNPC = CFrame.new(-1598, 35, 153),
+            EnemyName = "Monkey",
+            EnemyCFrame = CFrame.new(-1620, 35, 140)
+        }
+    else
+        -- القالب العام التلقائي لأقرب بوتات تناسب مستواك
+        return {
+            QuestName = "Auto",
+            QuestLevel = 1,
+            QuestNPC = player.Character.HumanoidRootPart.CFrame,
+            EnemyName = "",
+            EnemyCFrame = player.Character.HumanoidRootPart.CFrame
+        }
+    end
+end
+
+-- ==========================================
+-- 4. واجهة المستخدم المتقدمة (UI Hub)
 -- ==========================================
 
 if CoreGui:FindFirstChild("BloxFruitsAutoFarmUI") then
@@ -102,7 +141,6 @@ local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "BloxFruitsAutoFarmUI"
 ScreenGui.Parent = CoreGui
 
--- الزر العائم (Mobile Friendly Icon)
 local ToggleIcon = Instance.new("TextButton")
 ToggleIcon.Size = UDim2.new(0, 50, 0, 50)
 ToggleIcon.Position = UDim2.new(0.02, 0, 0.15, 0)
@@ -124,7 +162,6 @@ IconStroke.Color = Color3.fromRGB(0, 230, 180)
 IconStroke.Thickness = 2
 IconStroke.Parent = ToggleIcon
 
--- الإطار الرئيسي
 local MainFrame = Instance.new("Frame")
 MainFrame.Size = UDim2.new(0, 480, 0, 330)
 MainFrame.Position = UDim2.new(0.5, -240, 0.25, 0)
@@ -142,20 +179,10 @@ local MainCorner = Instance.new("UICorner")
 MainCorner.CornerRadius = UDim.new(0, 12)
 MainCorner.Parent = MainFrame
 
-local MainStroke = Instance.new("UIStroke")
-MainStroke.Color = Color3.fromRGB(0, 230, 180)
-MainStroke.Thickness = 1.5
-MainStroke.Parent = MainFrame
-
--- القائمة الجانبية
 local Sidebar = Instance.new("Frame")
 Sidebar.Size = UDim2.new(0, 135, 1, 0)
 Sidebar.BackgroundColor3 = Color3.fromRGB(18, 23, 34)
 Sidebar.Parent = MainFrame
-
-local SideCorner = Instance.new("UICorner")
-SideCorner.CornerRadius = UDim.new(0, 12)
-SideCorner.Parent = Sidebar
 
 local SideLayout = Instance.new("UIListLayout")
 SideLayout.Padding = UDim.new(0, 8)
@@ -303,7 +330,6 @@ local function AddSelector(parentPage, title, options, configVar)
     end)
 end
 
--- إنشاء الأقسام
 local FarmTab = CreateTab("⚔️ Auto Farm")
 local WeaponTab = CreateTab("🗡️ Weapons")
 local MiscTab = CreateTab("⚙️ Misc Settings")
@@ -311,7 +337,6 @@ local MiscTab = CreateTab("⚙️ Misc Settings")
 tabs[1].Page.Visible = true
 tabs[1].Btn.TextColor3 = Color3.fromRGB(0, 230, 180)
 
--- عناصر التحكم
 AddToggle(FarmTab, "Auto Farm Level", "AutoFarmLevel")
 AddToggle(FarmTab, "Fast Attack Mode", "FastAttack")
 AddSelector(WeaponTab, "Weapon:", {"Melee", "Blox Fruit", "Sword", "Gun"}, "SelectWeapon")
@@ -320,7 +345,7 @@ AddToggle(MiscTab, "Auto Distribute Stats", "AutoStats")
 AddSelector(MiscTab, "Stat Target:", {"Melee", "Defense", "Sword", "Gun", "Demon Fruit"}, "SelectStat")
 
 -- ==========================================
--- 4. المحرك الأساسي لـ Auto Farm Level
+-- 5. المحرك الذكي للتنقل المباشر وتتبع البوتات
 -- ==========================================
 
 task.spawn(function()
@@ -328,50 +353,42 @@ task.spawn(function()
         task.wait(0.1)
         if _G.Config.AutoFarmLevel then
             pcall(function()
-                -- تفعيل الهاكي إن وجد
-                if _G.Config.AutoBuso and not player.Character:FindFirstChild("HasBuso") then
-                    ReplicatedStorage.Remotes.CommF_:InvokeServer("HasBuso")
-                end
+                local qData = GetQuestData()
                 
-                -- البحث عن البوتات القريبة القابلة للهجوم
-                local enemies = workspace.Enemies:GetChildren()
-                local hasTarget = false
-                
-                for _, enemy in pairs(enemies) do
-                    if _G.Config.AutoFarmLevel and enemy:FindFirstChild("Humanoid") and enemy.Humanoid.Health > 0 and enemy:FindFirstChild("HumanoidRootPart") then
-                        hasTarget = true
-                        while _G.Config.AutoFarmLevel and enemy and enemy:FindFirstChild("Humanoid") and enemy.Humanoid.Health > 0 do
-                            task.wait()
-                            EquipWeapon()
-                            TweenTo(enemy.HumanoidRootPart.CFrame * CFrame.new(0, 10, 0), 320)
-                            FastClick()
+                -- أخذ المهمة إذا لم تكن مأخوذة
+                if not player.PlayerGui.Main:FindFirstChild("Quest") or not player.PlayerGui.Main.Quest.Visible then
+                    if qData.QuestName ~= "Auto" then
+                        TweenTo(qData.QuestNPC, 320)
+                        if (player.Character.HumanoidRootPart.Position - qData.QuestNPC.Position).Magnitude < 15 then
+                            ReplicatedStorage.Remotes.CommF_:InvokeServer("StartQuest", qData.QuestName, qData.QuestLevel)
                         end
-                        StopMovement()
                     end
                 end
                 
-                if not hasTarget then
-                    StopMovement()
+                -- البحث عن البوت المطلوب ومهاجمته من الأعلى
+                local enemies = workspace.Enemies:GetChildren()
+                local foundTarget = false
+                
+                for _, enemy in pairs(enemies) do
+                    if not _G.Config.AutoFarmLevel then StopMovement() break end
+                    if enemy:FindFirstChild("Humanoid") and enemy.Humanoid.Health > 0 and enemy:FindFirstChild("HumanoidRootPart") then
+                        if qData.EnemyName == "" or enemy.Name:find(qData.EnemyName) or player.Data.Level.Value >= 2550 then
+                            foundTarget = true
+                            while _G.Config.AutoFarmLevel and enemy and enemy:FindFirstChild("Humanoid") and enemy.Humanoid.Health > 0 do
+                                task.wait()
+                                EquipWeapon()
+                                TweenTo(enemy.HumanoidRootPart.CFrame * CFrame.new(0, 10, 0), 320)
+                                FastClick()
+                            end
+                            StopMovement()
+                        end
+                    end
                 end
-            end)
-        end
-    end
-end)
-
--- نظام توزيع النقاط التلقائي (Auto Stats)
-task.spawn(function()
-    while true do
-        task.wait(1)
-        if _G.Config.AutoStats then
-            pcall(function()
-                local statMap = {
-                    ["Melee"] = "Melee",
-                    ["Defense"] = "Defense",
-                    ["Sword"] = "Sword",
-                    ["Gun"] = "Gun",
-                    ["Demon Fruit"] = "Demon Fruit"
-                }
-                ReplicatedStorage.Remotes.CommF_:InvokeServer("AddPoint", statMap[_G.Config.SelectStat], 3)
+                
+                -- إذا لم يجد البوت قريب يذهب إلى منطقة رسبنتهم المخصصة
+                if not foundTarget and _G.Config.AutoFarmLevel then
+                    TweenTo(qData.EnemyCFrame, 320)
+                end
             end)
         end
     end
