@@ -18,14 +18,12 @@ _G.Config = {
     FastAttack = true,
     SelectWeapon = "Melee", -- "Melee", "Blox Fruit", "Sword", "Gun"
     AutoBuso = true,
-    AutoStats = false,
-    SelectStat = "Melee",
 }
 
 local currentTween = nil
 
 -- ==========================================
--- 2. قائمة جزر العوالم الثلاثة (Islands Data)
+-- 2. قائمة جزر العوالم الثلاثة المحدثة للـ Max Level 2800
 -- ==========================================
 
 local SeaIslands = {
@@ -38,17 +36,18 @@ local SeaIslands = {
         ["Middle Town [Lv. 100]"] = CFrame.new(-650, 8, 1435),
         ["Frozen Village [Lv. 90-120]"] = CFrame.new(1150, 27, -1425),
         ["Marine Ford [Lv. 120-150]"] = CFrame.new(-4800, 21, 4290),
-        ["Skypiea [Lv. 150-250]"] = CFrame.new(-4850, 718, -2620),
-        ["Prison [Lv. 190-275]"] = CFrame.new(4870, 5, 735),
+        ["Skypiea Lower [Lv. 150-190]"] = CFrame.new(-4850, 718, -2620),
+        ["Prison [Lv. 190-225]"] = CFrame.new(4870, 5, 735),
         ["Colosseum [Lv. 225-300]"] = CFrame.new(-1425, 7, -2750),
         ["Magma Village [Lv. 300-375]"] = CFrame.new(-5250, 8, 8500),
         ["Underwater City [Lv. 375-450]"] = CFrame.new(3860, 5, -1925),
+        ["Skypiea Upper [Lv. 450-575]"] = CFrame.new(-7900, 5582, -380),
         ["Fountain City [Lv. 625-700]"] = CFrame.new(5250, 38, 4050)
     },
     -- Second Sea (العالم الثاني)
     SecondSea = {
-        ["Cafe / Kingdom of Rose [Lv. 700-850]"] = CFrame.new(-430, 73, 295),
-        ["Ushap / Green Zone [Lv. 875-925]"] = CFrame.new(-2350, 73, -3150),
+        ["Kingdom of Rose [Lv. 700-850]"] = CFrame.new(-430, 73, 295),
+        ["Green Zone [Lv. 875-925]"] = CFrame.new(-2350, 73, -3150),
         ["Graveyard [Lv. 950-975]"] = CFrame.new(-5400, 48, -720),
         ["Snow Mountain [Lv. 1000-1050]"] = CFrame.new(650, 400, -5300),
         ["Hot and Cold [Lv. 1100-1200]"] = CFrame.new(-6000, 15, -5000),
@@ -56,20 +55,22 @@ local SeaIslands = {
         ["Ice Castle [Lv. 1350-1400]"] = CFrame.new(5550, 28, -6250),
         ["Forgotten Island [Lv. 1425-1475]"] = CFrame.new(-3050, 235, -10150)
     },
-    -- Third Sea (العالم الثالث)
+    -- Third Sea (العالم الثالث - محدث للـ Max Level 2800)
     ThirdSea = {
         ["Port Town [Lv. 1500-1575]"] = CFrame.new(-290, 44, 5350),
-        ["Hydra Island [Lv. 1575-1675]"] = CFrame.new(5700, 600, 200),
-        ["Great Tree [Lv. 1700-1750]"] = CFrame.new(2284, 443, -7168),
+        ["Hydra Island [Lv. 1575-1700]"] = CFrame.new(5700, 600, 200),
+        ["Great Tree [Lv. 1700-1775]"] = CFrame.new(2284, 443, -7168),
         ["Floating Turtle [Lv. 1775-1975]"] = CFrame.new(-13200, 330, -7600),
-        ["Castle on the Sea [Lv. 1800]"] = CFrame.new(-5058, 314, -3155),
+        ["Castle on the Sea [Lv. 1800 Hub]"] = CFrame.new(-5058, 314, -3155),
         ["Haunted Castle [Lv. 1975-2075]"] = CFrame.new(-9500, 142, 5500),
         ["Sea of Treats / Cake [Lv. 2075-2275]"] = CFrame.new(-2100, 70, -12100),
-        ["Chocolate Land [Lv. 2300-2550]"] = CFrame.new(220, 25, -12100)
+        ["Chocolate Land [Lv. 2300-2450]"] = CFrame.new(220, 25, -12100),
+        ["Tiki Outpost [Lv. 2450-2600]"] = CFrame.new(-16200, 10, 400),
+        ["Submerged Island [Lv. 2600-2800 Max]"] = CFrame.new(-18500, 15, -1200)
     }
 }
 
--- تحديد العالم الحالي أوتوماتيكياً
+-- تحديد العالم الحالي
 local function GetCurrentSeaIslands()
     local placeId = game.PlaceId
     if placeId == 2753915549 then
@@ -85,7 +86,6 @@ end
 -- 3. المحركات الأساسية (Noclip, Bring Mobs, Attack)
 -- ==========================================
 
--- إلغاء التصادم بالجدران
 RunService.Stepped:Connect(function()
     if (_G.Config.AutoFarmLevel or _G.Config.FarmSelectedIsland) and player.Character then
         for _, part in pairs(player.Character:GetDescendants()) do
@@ -138,14 +138,13 @@ local function EquipWeapon()
     end
 end
 
--- تجميع البوتات في نقطة واحدة (Bring Mobs)
 local function Bringmobs(targetCFrame)
     if not _G.Config.BringMobs then return end
     for _, enemy in pairs(workspace.Enemies:GetChildren()) do
         if enemy:FindFirstChild("Humanoid") and enemy.Humanoid.Health > 0 and enemy:FindFirstChild("HumanoidRootPart") then
             if (enemy.HumanoidRootPart.Position - targetCFrame.Position).Magnitude <= 350 then
-                enemy.HumanoidRootPart.CFrame = targetCFrame * CFrame.new(0, 0, -5)
-                enemy.HumanoidRootPart.Size = Vector3.new(30, 30, 30)
+                enemy.HumanoidRootPart.CFrame = targetCFrame * CFrame.new(0, 0, -4)
+                enemy.HumanoidRootPart.Size = Vector3.new(35, 35, 35)
                 enemy.Humanoid.JumpPower = 0
                 enemy.Humanoid.WalkSpeed = 0
                 enemy.HumanoidRootPart.CanCollide = false
@@ -154,7 +153,6 @@ local function Bringmobs(targetCFrame)
     end
 end
 
--- Fast Attack عن بعد
 local function RangedAutoAttack()
     if _G.Config.FastAttack then
         VirtualUser:CaptureController()
@@ -163,7 +161,7 @@ local function RangedAutoAttack()
 end
 
 -- ==========================================
--- 4. واجهة المستخدم (UI Hub)
+-- 4. واجهة المستخدم القائمة المنسدلة
 -- ==========================================
 
 if CoreGui:FindFirstChild("BloxFruitsAutoFarmUI") then
@@ -190,14 +188,9 @@ local IconCorner = Instance.new("UICorner")
 IconCorner.CornerRadius = UDim.new(0, 15)
 IconCorner.Parent = ToggleIcon
 
-local IconStroke = Instance.new("UIStroke")
-IconStroke.Color = Color3.fromRGB(0, 230, 180)
-IconStroke.Thickness = 2
-IconStroke.Parent = ToggleIcon
-
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 500, 0, 340)
-MainFrame.Position = UDim2.new(0.5, -250, 0.25, 0)
+MainFrame.Size = UDim2.new(0, 520, 0, 350)
+MainFrame.Position = UDim2.new(0.5, -260, 0.25, 0)
 MainFrame.BackgroundColor3 = Color3.fromRGB(12, 15, 22)
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
@@ -224,10 +217,10 @@ SideLayout.Parent = Sidebar
 
 local TitleLabel = Instance.new("TextLabel")
 TitleLabel.Size = UDim2.new(1, 0, 0, 45)
-TitleLabel.Text = "🌾 ULTRA FARM"
+TitleLabel.Text = "🌾 ULTRA FARM [2800]"
 TitleLabel.TextColor3 = Color3.fromRGB(0, 230, 180)
 TitleLabel.Font = Enum.Font.GothamBold
-TitleLabel.TextSize = 13
+TitleLabel.TextSize = 12
 TitleLabel.BackgroundTransparency = 1
 TitleLabel.Parent = Sidebar
 
@@ -285,7 +278,7 @@ local function CreateTab(tabName)
     return TabPage
 end
 
-local function AddToggle(parentPage, name, configVar, callback)
+local function AddToggle(parentPage, name, configVar)
     local Button = Instance.new("TextButton")
     Button.Size = UDim2.new(0.96, 0, 0, 34)
     Button.BackgroundColor3 = Color3.fromRGB(22, 28, 40)
@@ -315,85 +308,96 @@ local function AddToggle(parentPage, name, configVar, callback)
         Indicator.BackgroundColor3 = _G.Config[configVar] and Color3.fromRGB(0, 230, 180) or Color3.fromRGB(45, 52, 68)
         Button.TextColor3 = _G.Config[configVar] and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(150, 150, 160)
         if not _G.Config[configVar] then StopMovement() end
-        if callback then callback(_G.Config[configVar]) end
     end)
     return Button
 end
 
-local function AddSelector(parentPage, title, options, configVar)
-    local Frame = Instance.new("Frame")
-    Frame.Size = UDim2.new(0.96, 0, 0, 42)
-    Frame.BackgroundColor3 = Color3.fromRGB(22, 28, 40)
-    Frame.Parent = parentPage
+-- تصميم القائمة المنسدلة للجزر (Dropdown Menu)
+local function AddDropdown(parentPage, title, optionsList, configVar)
+    local Container = Instance.new("Frame")
+    Container.Size = UDim2.new(0.96, 0, 0, 40)
+    Container.BackgroundColor3 = Color3.fromRGB(22, 28, 40)
+    Container.ClipsDescendants = true
+    Container.Parent = parentPage
 
-    local FCorner = Instance.new("UICorner")
-    FCorner.CornerRadius = UDim.new(0, 6)
-    FCorner.Parent = Frame
+    local CCorner = Instance.new("UICorner")
+    CCorner.CornerRadius = UDim.new(0, 6)
+    CCorner.Parent = Container
 
-    local Label = Instance.new("TextLabel")
-    Label.Size = UDim2.new(0.35, 0, 1, 0)
-    Label.Position = UDim2.new(0, 8, 0, 0)
-    Label.Text = title
-    Label.TextColor3 = Color3.fromRGB(200, 210, 225)
-    Label.Font = Enum.Font.GothamMedium
-    Label.TextSize = 10
-    Label.BackgroundTransparency = 1
-    Label.TextXAlignment = Enum.TextXAlignment.Left
-    Label.Parent = Frame
+    local HeaderBtn = Instance.new("TextButton")
+    HeaderBtn.Size = UDim2.new(1, 0, 0, 40)
+    HeaderBtn.BackgroundTransparency = 1
+    HeaderBtn.Text = "  " .. title .. " : " .. (_G.Config[configVar] ~= "" and _G.Config[configVar] or "اختر جزيرة")
+    HeaderBtn.TextColor3 = Color3.fromRGB(0, 230, 180)
+    HeaderBtn.Font = Enum.Font.GothamBold
+    HeaderBtn.TextSize = 10
+    HeaderBtn.TextXAlignment = Enum.TextXAlignment.Left
+    HeaderBtn.Parent = Container
 
-    local Btn = Instance.new("TextButton")
-    Btn.Size = UDim2.new(0.58, 0, 0.7, 0)
-    Btn.Position = UDim2.new(0.38, 0, 0.15, 0)
-    Btn.BackgroundColor3 = Color3.fromRGB(32, 40, 58)
-    Btn.Text = tostring(_G.Config[configVar])
-    Btn.TextColor3 = Color3.fromRGB(0, 230, 180)
-    Btn.Font = Enum.Font.GothamBold
-    Btn.TextSize = 9
-    Btn.Parent = Frame
+    local DropList = Instance.new("Frame")
+    DropList.Size = UDim2.new(1, 0, 0, #optionsList * 28)
+    DropList.Position = UDim2.new(0, 0, 0, 40)
+    DropList.BackgroundTransparency = 1
+    DropList.Parent = Container
 
-    local BCorner = Instance.new("UICorner")
-    BCorner.CornerRadius = UDim.new(0, 5)
-    BCorner.Parent = Btn
+    local DropLayout = Instance.new("UIListLayout")
+    DropLayout.Parent = DropList
 
-    local currentIndex = 1
-    Btn.MouseButton1Click:Connect(function()
-        currentIndex = (currentIndex % #options) + 1
-        _G.Config[configVar] = options[currentIndex]
-        Btn.Text = tostring(options[currentIndex])
+    local isExpanded = false
+
+    HeaderBtn.MouseButton1Click:Connect(function()
+        isExpanded = not isExpanded
+        Container.Size = isExpanded and UDim2.new(0.96, 0, 0, 40 + (#optionsList * 28)) or UDim2.new(0.96, 0, 0, 40)
     end)
+
+    for _, optName in ipairs(optionsList) do
+        local ItemBtn = Instance.new("TextButton")
+        ItemBtn.Size = UDim2.new(1, 0, 0, 28)
+        ItemBtn.BackgroundColor3 = Color3.fromRGB(28, 35, 50)
+        ItemBtn.Text = "    • " .. optName
+        ItemBtn.TextColor3 = Color3.fromRGB(200, 210, 225)
+        ItemBtn.Font = Enum.Font.GothamMedium
+        ItemBtn.TextSize = 9
+        ItemBtn.TextXAlignment = Enum.TextXAlignment.Left
+        ItemBtn.Parent = DropList
+
+        ItemBtn.MouseButton1Click:Connect(function()
+            _G.Config[configVar] = optName
+            HeaderBtn.Text = "  " .. title .. " : " .. optName
+            isExpanded = false
+            Container.Size = UDim2.new(0.96, 0, 0, 40)
+        end)
+    end
 end
 
 local FarmTab = CreateTab("⚔️ Auto Farm")
-local IslandsTab = CreateTab("🏝️ Islands")
-local WeaponTab = CreateTab("🗡️ Weapons")
+local IslandsTab = CreateTab("🏝️ Islands List")
 
 tabs[1].Page.Visible = true
 tabs[1].Btn.TextColor3 = Color3.fromRGB(0, 230, 180)
 
--- أزرار القائمة
 AddToggle(FarmTab, "Auto Farm Level (Smart)", "AutoFarmLevel")
 AddToggle(FarmTab, "Bring Mobs (Group)", "BringMobs")
 AddToggle(FarmTab, "Fast Attack Mode", "FastAttack")
 
--- قائمة الجزر
+-- تجهيز قائمة الجزر المنظمة
 local currentSeaIslands = GetCurrentSeaIslands()
-local islandNames = {}
+local islandListKeys = {}
 for name, _ in pairs(currentSeaIslands) do
-    table.insert(islandNames, name)
+    table.insert(islandListKeys, name)
 end
-_G.Config.SelectedIsland = islandNames[1] or ""
+table.sort(islandListKeys)
+
+_G.Config.SelectedIsland = islandListKeys[1] or ""
 
 AddToggle(IslandsTab, "Farm Selected Island", "FarmSelectedIsland")
-AddSelector(IslandsTab, "Select Island:", islandNames, "SelectedIsland")
-
-AddSelector(WeaponTab, "Weapon:", {"Melee", "Blox Fruit", "Sword", "Gun"}, "SelectWeapon")
-AddToggle(WeaponTab, "Auto Buso Haki", "AutoBuso")
+AddDropdown(IslandsTab, "الجزر المتاحة", islandListKeys, "SelectedIsland")
 
 -- ==========================================
--- 5. تنفيذ عمليات التلفيل والتجميع
+-- 5. تشغيل عمليات الفارم والتنقل الذكي
 -- ==========================================
 
--- A. التلفيل الذكي والتنقل للجزر
+-- التلفيل التلقائي الذكي
 task.spawn(function()
     while true do
         task.wait(0.1)
@@ -404,12 +408,9 @@ task.spawn(function()
                 end
                 
                 local enemies = workspace.Enemies:GetChildren()
-                local hasTarget = false
-                
                 for _, enemy in pairs(enemies) do
                     if not _G.Config.AutoFarmLevel then StopMovement() break end
                     if enemy:FindFirstChild("Humanoid") and enemy.Humanoid.Health > 0 and enemy:FindFirstChild("HumanoidRootPart") then
-                        hasTarget = true
                         while _G.Config.AutoFarmLevel and enemy and enemy:FindFirstChild("Humanoid") and enemy.Humanoid.Health > 0 do
                             task.wait()
                             EquipWeapon()
@@ -421,21 +422,12 @@ task.spawn(function()
                         StopMovement()
                     end
                 end
-                
-                -- إذا لم يجد بوتات، ينتقل لأقرب جزيرة بناءً على ليفل اللاعب
-                if not hasTarget and _G.Config.AutoFarmLevel then
-                    local pLevel = player.Data.Level.Value
-                    for name, cf in pairs(currentSeaIslands) do
-                        TweenTo(cf, 320)
-                        break
-                    end
-                end
             end)
         end
     end
 end)
 
--- B. التلفيل في جزيرة مخصصة مختارة
+-- التلفيل في الجزيرة المختارة
 task.spawn(function()
     while true do
         task.wait(0.1)
@@ -444,7 +436,7 @@ task.spawn(function()
                 local targetCF = currentSeaIslands[_G.Config.SelectedIsland]
                 if targetCF then
                     local dist = (player.Character.HumanoidRootPart.Position - targetCF.Position).Magnitude
-                    if dist > 200 then
+                    if dist > 250 then
                         TweenTo(targetCF, 340)
                     else
                         local enemies = workspace.Enemies:GetChildren()
